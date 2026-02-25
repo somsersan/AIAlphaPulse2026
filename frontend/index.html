@@ -4,175 +4,438 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI ALPHA PULSE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #0a0a0f; color: #e0e0e0; font-family: 'Courier New', monospace; }
-  header { background: #0d0d1a; border-bottom: 1px solid #1a1a3e; padding: 16px 32px;
-    display: flex; justify-content: space-between; align-items: center; }
-  h1 { color: #7c3aed; font-size: 1.4rem; letter-spacing: 2px; }
-  .badge { background: #7c3aed22; color: #7c3aed; border: 1px solid #7c3aed55;
-    padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; }
-  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-bottom: 32px; }
-  .card { background: #0d0d1a; border: 1px solid #1a1a3e; border-radius: 12px; padding: 20px;
-    transition: border-color 0.2s; }
-  .card:hover { border-color: #7c3aed55; }
-  .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  .ticker { font-size: 1.1rem; font-weight: bold; color: #fff; }
-  .exchange { font-size: 0.7rem; color: #666; }
-  .score-big { font-size: 2.5rem; font-weight: bold; text-align: center; margin: 12px 0; }
-  .score-pos { color: #22c55e; }
-  .score-neg { color: #ef4444; }
-  .score-neu { color: #f59e0b; }
-  .signal { text-align: center; font-size: 0.8rem; letter-spacing: 1px; padding: 4px 12px;
-    border-radius: 20px; display: inline-block; width: 100%; margin-bottom: 12px; }
-  .sig-sb { background: #22c55e22; color: #22c55e; border: 1px solid #22c55e44; }
-  .sig-b  { background: #86efac22; color: #86efac; border: 1px solid #86efac44; }
-  .sig-n  { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b44; }
-  .sig-s  { background: #f8717122; color: #f87171; border: 1px solid #f8717144; }
-  .sig-ss { background: #ef444422; color: #ef4444; border: 1px solid #ef444444; }
-  .factors { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .factor { background: #ffffff08; border-radius: 8px; padding: 8px; text-align: center; }
-  .factor-label { font-size: 0.65rem; color: #666; margin-bottom: 4px; text-transform: uppercase; }
-  .factor-val { font-size: 0.9rem; font-weight: bold; }
-  .explanation { font-size: 0.7rem; color: #888; margin-top: 10px; border-top: 1px solid #1a1a3e;
-    padding-top: 8px; }
-  .table-wrap { background: #0d0d1a; border: 1px solid #1a1a3e; border-radius: 12px; overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; }
-  th { background: #12122a; color: #666; font-size: 0.7rem; text-transform: uppercase;
-    letter-spacing: 1px; padding: 12px 16px; text-align: right; }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080808;
+    --surface: #0f0f0f;
+    --border: #1c1c1c;
+    --border-light: #242424;
+    --text: #f0f0f0;
+    --text-muted: #555;
+    --text-dim: #333;
+    --accent: #ffffff;
+    --green: #c8f5c8;
+    --red: #f5c8c8;
+    --yellow: #f5f0c8;
+    --green-dim: #1a2e1a;
+    --red-dim: #2e1a1a;
+    --yellow-dim: #2e2a1a;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 100;
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .logo-img {
+    width: 36px;
+    height: 36px;
+    object-fit: contain;
+    filter: grayscale(1) brightness(1.8);
+  }
+
+  .logo-text {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+
+  .last-update {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+  }
+
+  .btn {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border-light);
+    padding: 7px 18px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    transition: all 0.15s;
+  }
+  .btn:hover { color: var(--text); border-color: #555; }
+
+  /* MAIN */
+  main { max-width: 1280px; margin: 0 auto; padding: 48px; }
+
+  /* SECTION LABEL */
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* CARDS */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 60px;
+  }
+
+  .card {
+    background: var(--surface);
+    padding: 28px 24px;
+    transition: background 0.15s;
+    cursor: default;
+  }
+  .card:hover { background: #141414; }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+
+  .ticker {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .asset-name {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 3px;
+    letter-spacing: 0.03em;
+  }
+
+  .signal-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .dot-buy    { background: #fff; }
+  .dot-sell   { background: #555; }
+  .dot-neu    { background: #333; border: 1px solid #555; }
+
+  .score-num {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.8rem;
+    font-weight: 300;
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .score-pos { color: var(--text); }
+  .score-neg { color: #666; }
+  .score-neu { color: #888; }
+
+  .signal-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 20px;
+  }
+
+  .mini-factors {
+    display: flex;
+    gap: 16px;
+  }
+  .mini-factor {
+    flex: 1;
+  }
+  .mini-label {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .mini-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  /* TABLE */
+  .table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 14px 20px;
+    text-align: right;
+    font-size: 0.62rem;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--surface);
+  }
   th:first-child { text-align: left; }
-  td { padding: 12px 16px; border-top: 1px solid #1a1a3e; text-align: right; font-size: 0.85rem; }
-  td:first-child { text-align: left; }
-  tr:hover td { background: #ffffff04; }
-  .refresh-btn { background: #7c3aed; color: white; border: none; padding: 8px 20px;
-    border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.8rem; }
-  .refresh-btn:hover { background: #6d28d9; }
-  .last-update { color: #555; font-size: 0.7rem; }
-  h2 { color: #888; font-size: 0.85rem; letter-spacing: 2px; margin-bottom: 16px; text-transform: uppercase; }
-  .loading { text-align: center; color: #555; padding: 40px; }
+
+  td {
+    padding: 16px 20px;
+    text-align: right;
+    font-size: 0.82rem;
+    font-weight: 300;
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+  }
+  td:first-child { text-align: left; color: var(--text); }
+
+  tr:hover td { background: #0c0c0c; }
+
+  .td-ticker {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+    letter-spacing: 0.05em;
+  }
+  .td-name { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+  .td-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 500;
+  }
+  .td-score.pos { color: var(--text); }
+  .td-score.neg { color: #555; }
+
+  .tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 3px;
+    font-weight: 400;
+  }
+  .tag-buy  { background: #fff; color: #000; }
+  .tag-sell { background: #1c1c1c; color: #777; border: 1px solid #2a2a2a; }
+  .tag-neu  { background: transparent; color: #555; border: 1px solid #2a2a2a; }
+
+  .expl { font-size: 0.7rem; color: #3a3a3a; text-align: left; }
+
+  /* LOADING */
+  .loading { text-align: center; color: var(--text-muted); padding: 60px; font-size: 0.8rem; letter-spacing: 0.1em; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
 </style>
 </head>
 <body>
+
 <header>
-  <h1>⚡ AI ALPHA PULSE</h1>
-  <div style="display:flex;gap:12px;align-items:center">
-    <span class="last-update" id="lastUpdate">Обновление...</span>
-    <button class="refresh-btn" onclick="loadScores()">↻ Обновить</button>
-    <span class="badge">v0.2</span>
+  <div class="logo-wrap">
+    <img src="logo.jpg" alt="Logo" class="logo-img">
+    <span class="logo-text">AI Alpha Pulse</span>
+  </div>
+  <div class="header-right">
+    <span class="last-update" id="lastUpdate">—</span>
+    <button class="btn" onclick="loadScores()">Refresh</button>
   </div>
 </header>
 
-<div class="container">
-  <h2>🔥 Топ активов</h2>
-  <div class="grid" id="cardsGrid"><div class="loading">Загрузка скорингов...</div></div>
+<main>
+  <div class="section-label">Assets Overview</div>
+  <div class="cards-grid" id="cardsGrid">
+    <div class="loading">Loading scores...</div>
+  </div>
 
-  <h2>📊 Таблица скорингов</h2>
+  <div class="section-label">Scoring Table</div>
   <div class="table-wrap">
     <table>
       <thead>
         <tr>
-          <th>Актив</th><th>Тренд</th><th>Волатил.</th>
-          <th>AI SCORE</th><th>Сигнал</th><th>Объяснение</th>
+          <th>Asset</th>
+          <th>Trend</th>
+          <th>Volatility</th>
+          <th>AI Score</th>
+          <th>Signal</th>
+          <th style="text-align:left">Explanation</th>
         </tr>
       </thead>
-      <tbody id="tableBody"><tr><td colspan="6" class="loading">Загрузка...</td></tr></tbody>
+      <tbody id="tableBody">
+        <tr><td colspan="6" class="loading">Loading...</td></tr>
+      </tbody>
     </table>
   </div>
-</div>
+</main>
 
 <script>
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-  ? 'http://127.0.0.1:8000' : '';
+const API = '/api';
 
-function scoreColor(s) {
+function scoreClass(s) {
   if (s >= 25) return 'score-pos';
   if (s <= -25) return 'score-neg';
   return 'score-neu';
 }
-function sigClass(s) {
-  return {'STRONG BUY':'sig-sb','BUY':'sig-b','NEUTRAL':'sig-n','SELL':'sig-s','STRONG SELL':'sig-ss'}[s] || 'sig-n';
+function dotClass(sig) {
+  if (['STRONG BUY','BUY'].includes(sig)) return 'dot-buy';
+  if (['STRONG SELL','SELL'].includes(sig)) return 'dot-sell';
+  return 'dot-neu';
 }
-function sigEmoji(s) {
-  return {'STRONG BUY':'🟢🟢','BUY':'🟢','NEUTRAL':'🟡','SELL':'🔴','STRONG SELL':'🔴🔴'}[s] || '⚪';
+function tagClass(sig) {
+  if (['STRONG BUY','BUY'].includes(sig)) return 'tag-buy';
+  if (['STRONG SELL','SELL'].includes(sig)) return 'tag-sell';
+  return 'tag-neu';
 }
+function tdScoreClass(s) { return s >= 25 ? 'pos' : s <= -25 ? 'neg' : ''; }
+function fmt(n) { return (n > 0 ? '+' : '') + (+n).toFixed(1); }
 
 async function loadScores() {
   try {
-    const r = await fetch(`${API}/scores`);
-    const data = await r.json();
-    const scores = data.scores || [];
+    // Try /scores first, then fetch per-asset
+    let items = [];
+    try {
+      const r = await fetch(`${API}/scores`);
+      const data = await r.json();
+      items = data.scores || [];
+    } catch {}
 
-    // Also fetch from /score/ for real-time if scores empty
-    let items = scores;
     if (!items.length) {
-      const assets = ['AAPL','MSFT','BTCUSDT','ETHUSDT','SBER'];
-      items = await Promise.all(assets.map(t =>
-        fetch(`${API}/score/${t}?asset_type=${['BTCUSDT','ETHUSDT','SOLUSDT'].includes(t)?'crypto':'stock'}`)
-          .then(r=>r.json()).catch(()=>null)
+      const tickers = [
+        ['AAPL','stock'],['MSFT','stock'],['GOOGL','stock'],
+        ['SBER','stock'],['GAZP','stock'],
+        ['BTCUSDT','crypto'],['ETHUSDT','crypto'],['SOLUSDT','crypto']
+      ];
+      const res = await Promise.all(tickers.map(([t,type]) =>
+        fetch(`${API}/score/${t}?asset_type=${type}`).then(r=>r.json()).catch(()=>null)
       ));
-      items = items.filter(Boolean);
+      items = res.filter(Boolean).map(r => ({
+        ticker: r.asset?.ticker || r.ticker,
+        name:   r.asset?.name   || r.name || r.asset?.ticker,
+        trend_score:      r.trend_score,
+        volatility_score: r.volatility_score,
+        ai_score:         r.ai_score,
+        signal:           r.signal,
+        explanation:      r.explanation,
+      }));
     }
 
     renderCards(items);
     renderTable(items);
-    document.getElementById('lastUpdate').textContent = 'Обновлено: ' + new Date().toLocaleTimeString('ru');
+    document.getElementById('lastUpdate').textContent =
+      new Date().toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
   } catch(e) {
-    document.getElementById('cardsGrid').innerHTML = `<div class="loading">Ошибка: ${e.message}<br>Убедитесь что API запущен: uvicorn api.main:app</div>`;
+    document.getElementById('cardsGrid').innerHTML =
+      `<div class="loading">API unavailable — make sure uvicorn is running</div>`;
   }
 }
 
 function renderCards(items) {
-  const sorted = [...items].sort((a,b) => (b.ai_score||0)-(a.ai_score||0));
+  const sorted = [...items].sort((a,b) => b.ai_score - a.ai_score);
   document.getElementById('cardsGrid').innerHTML = sorted.map(item => {
-    const ticker = item.ticker || item.asset?.ticker || '?';
-    const name = item.name || item.asset?.name || ticker;
-    const exchange = item.exchange || item.asset?.exchange || '';
-    const ai = +(item.ai_score||0).toFixed(1);
-    const trend = +(item.trend_score||0).toFixed(1);
-    const vol = +(item.volatility_score||0).toFixed(1);
-    const signal = item.signal || 'NEUTRAL';
-    const expl = item.explanation || '';
+    const ai  = +item.ai_score;
+    const t   = +item.trend_score;
+    const v   = +item.volatility_score;
+    const sig = item.signal || 'NEUTRAL';
     return `<div class="card">
-      <div class="card-header">
-        <div><div class="ticker">${ticker}</div><div class="exchange">${name} · ${exchange}</div></div>
+      <div class="card-top">
+        <div>
+          <div class="ticker">${item.ticker}</div>
+          <div class="asset-name">${item.name || item.ticker}</div>
+        </div>
+        <div class="signal-dot ${dotClass(sig)}"></div>
       </div>
-      <div class="score-big ${scoreColor(ai)}">${ai > 0 ? '+' : ''}${ai}</div>
-      <div style="text-align:center">
-        <span class="signal ${sigClass(signal)}">${sigEmoji(signal)} ${signal}</span>
+      <div class="score-num ${scoreClass(ai)}">${fmt(ai)}</div>
+      <div class="signal-label">${sig}</div>
+      <div class="mini-factors">
+        <div class="mini-factor">
+          <div class="mini-label">Trend</div>
+          <div class="mini-val">${fmt(t)}</div>
+        </div>
+        <div class="mini-factor">
+          <div class="mini-label">Volat.</div>
+          <div class="mini-val">${fmt(v)}</div>
+        </div>
       </div>
-      <div class="factors">
-        <div class="factor"><div class="factor-label">Тренд</div>
-          <div class="factor-val ${scoreColor(trend)}">${trend>0?'+':''}${trend}</div></div>
-        <div class="factor"><div class="factor-label">Волатил.</div>
-          <div class="factor-val ${scoreColor(vol)}">${vol>0?'+':''}${vol}</div></div>
-      </div>
-      ${expl ? `<div class="explanation">${expl}</div>` : ''}
     </div>`;
   }).join('');
 }
 
 function renderTable(items) {
-  const sorted = [...items].sort((a,b)=>(b.ai_score||0)-(a.ai_score||0));
+  const sorted = [...items].sort((a,b) => b.ai_score - a.ai_score);
   document.getElementById('tableBody').innerHTML = sorted.map(item => {
-    const ticker = item.ticker || item.asset?.ticker || '?';
-    const ai = +(item.ai_score||0).toFixed(1);
-    const trend = +(item.trend_score||0).toFixed(1);
-    const vol = +(item.volatility_score||0).toFixed(1);
-    const signal = item.signal || 'NEUTRAL';
-    const expl = item.explanation || '—';
+    const ai  = +item.ai_score;
+    const t   = +item.trend_score;
+    const v   = +item.volatility_score;
+    const sig = item.signal || 'NEUTRAL';
     return `<tr>
-      <td><strong>${ticker}</strong></td>
-      <td class="${scoreColor(trend)}">${trend>0?'+':''}${trend}</td>
-      <td class="${scoreColor(vol)}">${vol>0?'+':''}${vol}</td>
-      <td class="${scoreColor(ai)}" style="font-size:1.1rem;font-weight:bold">${ai>0?'+':''}${ai}</td>
-      <td><span class="signal ${sigClass(signal)}" style="width:auto;padding:3px 10px">${sigEmoji(signal)} ${signal}</span></td>
-      <td style="text-align:left;color:#888;font-size:0.75rem">${expl}</td>
+      <td>
+        <div class="td-ticker">${item.ticker}</div>
+        <div class="td-name">${item.name || ''}</div>
+      </td>
+      <td>${fmt(t)}</td>
+      <td>${fmt(v)}</td>
+      <td><span class="td-score ${tdScoreClass(ai)}">${fmt(ai)}</span></td>
+      <td><span class="tag ${tagClass(sig)}">${sig}</span></td>
+      <td class="expl">${item.explanation || '—'}</td>
     </tr>`;
   }).join('');
 }
 
-// Auto-refresh every 60 seconds
 loadScores();
 setInterval(loadScores, 60000);
 </script>
