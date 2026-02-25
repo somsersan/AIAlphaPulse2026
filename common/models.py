@@ -17,6 +17,8 @@ class ScoringResult(BaseModel):
     ai_score: float
     signal: str
     explanation: str
+    factor_scores: dict = {}   # все 7 факторов
+    weights: dict = {}         # веса для объяснения
 
     @property
     def signal_emoji(self) -> str:
