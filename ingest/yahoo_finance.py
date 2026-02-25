@@ -11,7 +11,10 @@ class YahooFinanceIngestor(BaseIngestor):
             df = yf.download(ticker, period=period, progress=False, auto_adjust=True)
             if df.empty:
                 raise ValueError("Empty response")
-            df.columns = [c.lower() for c in df.columns]
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = [col[0].lower() for col in df.columns]
+            else:
+                df.columns = [str(c).lower() for c in df.columns]
             df = df[["open", "high", "low", "close", "volume"]].dropna()
             self.logger.info(f"Got {len(df)} rows for {ticker}")
             return df
@@ -20,15 +23,13 @@ class YahooFinanceIngestor(BaseIngestor):
             return self._mock_data(ticker)
 
     def _mock_data(self, ticker: str) -> pd.DataFrame:
-        """Generate realistic mock OHLCV data as fallback."""
         dates = pd.date_range(end=pd.Timestamp.now(), periods=90, freq="D")
         np.random.seed(hash(ticker) % 2**32)
-        price = 100 + np.cumsum(np.random.randn(90) * 2)
-        price = np.abs(price)
+        price = np.abs(100 + np.cumsum(np.random.randn(90) * 2))
         return pd.DataFrame({
-            "open": price * (1 + np.random.randn(90) * 0.005),
-            "high": price * (1 + np.abs(np.random.randn(90)) * 0.01),
-            "low": price * (1 - np.abs(np.random.randn(90)) * 0.01),
+            "open": price*(1+np.random.randn(90)*0.005),
+            "high": price*(1+np.abs(np.random.randn(90))*0.01),
+            "low":  price*(1-np.abs(np.random.randn(90))*0.01),
             "close": price,
-            "volume": np.random.randint(1_000_000, 50_000_000, 90).astype(float),
+            "volume": np.random.randint(1_000_000,50_000_000,90).astype(float),
         }, index=dates)
