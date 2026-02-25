@@ -1,6 +1,7 @@
 """Core Pydantic models for AI ALPHA PULSE."""
 from datetime import datetime
 from pydantic import BaseModel
+from typing import Optional
 
 class Asset(BaseModel):
     ticker: str
@@ -19,5 +20,5 @@ class ScoringResult(BaseModel):
 
     @property
     def signal_emoji(self) -> str:
-        return {"STRONG BUY": "🟢🟢", "BUY": "🟢", "NEUTRAL": "🟡",
-                "SELL": "🔴", "STRONG SELL": "🔴🔴"}.get(self.signal, "⚪")
+        return {"STRONG BUY":"🟢🟢","BUY":"🟢","NEUTRAL":"🟡",
+                "SELL":"🔴","STRONG SELL":"🔴🔴"}.get(self.signal,"⚪")
