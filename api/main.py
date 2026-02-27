@@ -1,10 +1,12 @@
 """AI ALPHA PULSE — FastAPI REST API with scheduler."""
 import asyncio
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+import json
+from typing import List
+from fastapi import FastAPI, HTTPException, BackgroundTasks, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 import sys, os
 sys.path.insert(0, "/workspace/AIAlphaPulse2026")
 
@@ -17,6 +19,36 @@ from ingest.moex import MOEXIngestor
 from storage.database import save_scores, load_history, load_latest_all
 
 logger = get_logger("api")
+
+
+class ConnectionManager:
+    """Manages active WebSocket connections and broadcasts messages."""
+
+    def __init__(self):
+        self.active_connections: List[WebSocket] = []
+
+    async def connect(self, websocket: WebSocket):
+        await websocket.accept()
+        self.active_connections.append(websocket)
+
+    def disconnect(self, websocket: WebSocket):
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+
+    async def broadcast(self, payload: dict):
+        message = json.dumps(payload)
+        dead = []
+        for ws in self.active_connections:
+            try:
+                await ws.send_text(message)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.disconnect(ws)
+
+
+manager = ConnectionManager()
+
 
 TRACKED_ASSETS = [
     (Asset(ticker="AAPL",    name="Apple Inc.",      asset_type="stock",  exchange="NASDAQ"), "yahoo"),
@@ -49,6 +81,22 @@ async def run_scoring_cycle():
             logger.error(f"❌ Failed {asset.ticker}: {e}")
     if results:
         save_scores(results)
+        payload = {
+            "type": "scores_update",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "scores": [
+                {
+                    "ticker": r.asset.ticker,
+                    "ai_score": r.ai_score,
+                    "signal": r.signal,
+                    "trend_score": r.trend_score,
+                    "volatility_score": r.volatility_score,
+                    "explanation": r.explanation,
+                }
+                for r in results
+            ],
+        }
+        await manager.broadcast(payload)
     logger.info(f"🏁 Scoring cycle done: {len(results)} assets scored")
     return results
 
@@ -129,3 +177,28 @@ async def trigger_refresh(background_tasks: BackgroundTasks):
     """Manually trigger a full scoring cycle."""
     background_tasks.add_task(run_scoring_cycle)
     return {"status": "scoring cycle triggered", "assets": len(TRACKED_ASSETS)}
+
+
+@app.websocket("/ws/live")
+async def websocket_live(websocket: WebSocket):
+    """WebSocket endpoint — pushes score updates in real time."""
+    await manager.connect(websocket)
+    try:
+        # Send latest cached scores immediately on connect
+        df = load_latest_all()
+        if not df.empty:
+            scores = df.to_dict(orient="records")
+        else:
+            scores = []
+        await websocket.send_text(json.dumps({
+            "type": "scores_update",
+            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "scores": scores,
+        }))
+        # Keep connection open until client disconnects
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        manager.disconnect(websocket)
+    except Exception:
+        manager.disconnect(websocket)
