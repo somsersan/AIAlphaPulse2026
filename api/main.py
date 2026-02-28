@@ -54,14 +54,33 @@ manager = ConnectionManager()
 
 
 TRACKED_ASSETS = [
-    (Asset(ticker="AAPL",    name="Apple Inc.",      asset_type="stock",  exchange="NASDAQ"), "yahoo"),
-    (Asset(ticker="MSFT",    name="Microsoft Corp.", asset_type="stock",  exchange="NASDAQ"), "yahoo"),
-    (Asset(ticker="GOOGL",   name="Alphabet Inc.",   asset_type="stock",  exchange="NASDAQ"), "yahoo"),
-    (Asset(ticker="SBER",    name="Сбербанк",        asset_type="stock",  exchange="MOEX"),   "moex"),
-    (Asset(ticker="GAZP",    name="Газпром",         asset_type="stock",  exchange="MOEX"),   "moex"),
-    (Asset(ticker="BTCUSDT", name="Bitcoin",         asset_type="crypto", exchange="Binance"),"binance"),
-    (Asset(ticker="ETHUSDT", name="Ethereum",        asset_type="crypto", exchange="Binance"),"binance"),
-    (Asset(ticker="SOLUSDT", name="Solana",          asset_type="crypto", exchange="Binance"),"binance"),
+    # US Stocks — Yahoo Finance
+    (Asset(ticker="AAPL",    name="Apple Inc.",        asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="MSFT",    name="Microsoft Corp.",   asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="GOOGL",   name="Alphabet Inc.",     asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="AMZN",    name="Amazon.com Inc.",   asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="TSLA",    name="Tesla Inc.",        asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="NVDA",    name="NVIDIA Corp.",      asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="META",    name="Meta Platforms",    asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="NFLX",    name="Netflix Inc.",      asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="AMD",     name="AMD Inc.",          asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    (Asset(ticker="INTC",    name="Intel Corp.",       asset_type="stock",  exchange="NASDAQ"), "yahoo"),
+    # Russian Stocks — MOEX
+    (Asset(ticker="SBER",    name="Сбербанк",          asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="GAZP",    name="Газпром",           asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="LKOH",    name="Лукойл",            asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="YNDX",    name="Яндекс",            asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="TCSG",    name="Т-Банк",            asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="MGNT",    name="Магнит",            asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="FIVE",    name="X5 Retail Group",   asset_type="stock",  exchange="MOEX"),   "moex"),
+    (Asset(ticker="VKCO",    name="VK Company",        asset_type="stock",  exchange="MOEX"),   "moex"),
+    # Crypto — Binance
+    (Asset(ticker="BTCUSDT", name="Bitcoin",           asset_type="crypto", exchange="Binance"),"binance"),
+    (Asset(ticker="ETHUSDT", name="Ethereum",          asset_type="crypto", exchange="Binance"),"binance"),
+    (Asset(ticker="SOLUSDT", name="Solana",            asset_type="crypto", exchange="Binance"),"binance"),
+    (Asset(ticker="BNBUSDT", name="BNB",               asset_type="crypto", exchange="Binance"),"binance"),
+    (Asset(ticker="XRPUSDT", name="XRP",               asset_type="crypto", exchange="Binance"),"binance"),
+    (Asset(ticker="DOGEUSDT",name="Dogecoin",          asset_type="crypto", exchange="Binance"),"binance"),
 ]
 
 INGESTORS = {
@@ -162,7 +181,7 @@ def get_score(ticker: str, asset_type: str = "stock"):
         if asset_type == "crypto":
             ingestor = INGESTORS["binance"]
             asset = Asset(ticker=ticker, name=ticker, asset_type="crypto", exchange="Binance")
-        elif ticker in ["SBER","GAZP","LKOH","YNDX","MGNT"]:
+        elif ticker in ["SBER","GAZP","LKOH","YNDX","TCSG","MGNT","FIVE","VKCO"]:
             ingestor = INGESTORS["moex"]
             asset = Asset(ticker=ticker, name=ticker, asset_type="stock", exchange="MOEX")
         else:
