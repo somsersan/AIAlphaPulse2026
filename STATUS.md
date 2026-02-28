@@ -1,7 +1,7 @@
 # AI ALPHA PULSE — Product Status
-_Последнее обновление: 2026-02-25 Phase 3_
+_Последнее обновление: 2026-02-27 Phase 3 (PostgreSQL storage)_
 
-## Версия: v0.3.0
+## Версия: v0.4.0
 
 ## ✅ Что реализовано
 
@@ -26,23 +26,41 @@ _Последнее обновление: 2026-02-25 Phase 3_
 - Взвешенная сумма 7 агентов: Trend 35% | Sentiment 20% | Fundamental 20% | RS 10% | Volatility 5% | Insider 5% | Macro 5%
 - Диапазон: -100 (STRONG SELL) → +100 (STRONG BUY)
 
+### Storage (Phase 3 — DONE 2026-02-27)
+- **`storage/models.py`** — SQLAlchemy ORM: `assets`, `ohlcv_data`, `scoring_results`
+- **`storage/database.py`** — async (asyncpg) + CSV fallback по `DATABASE_URL`
+  - `DATABASE_URL=none` → CSV (`data/scores.csv`)
+  - `DATABASE_URL=postgresql://...` → PostgreSQL async upsert
+  - Публичный API: `save_scores`, `load_history`, `load_latest_all` (все async)
+- **Alembic**: `alembic.ini`, `alembic/env.py` (async), `alembic/versions/001_initial_schema.py`
+  - Применить: `DATABASE_URL=postgresql://... alembic upgrade head`
+- **`requirements.txt`**: добавлены `sqlalchemy[asyncio]>=2.0`, `alembic>=1.13`, `asyncpg>=0.29`, `greenlet>=3.0`, `pytest-asyncio>=0.23`
+- **21 тест**, все проходят (`pytest tests/test_storage.py`)
+
 ### API (FastAPI)
 - GET /score/{ticker} — полный скоринг + factor_scores (7 значений)
-- GET /scores — все активы
-- GET /history/{ticker} — история
+- GET /scores — все активы (async)
+- GET /history/{ticker} — история (async)
 - GET /assets — список
+- POST /score/refresh — ручной запуск цикла
 - Автоскоринг каждые 15 мин
 
 ### Frontend
 - Дашборд: карточки + таблица + автообновление 60s
 - Минимализм, чёрно-белый, Space Grotesk
 
+### Deploy
+- Dockerfile + docker-compose + nginx
+- GitHub Actions CI/CD
+
 ## ❌ В разработке / не готово
 1. Детальная карточка актива (клик → 7 факторов с объяснением)
-2. PostgreSQL (пока CSV)
-3. График истории AI SCORE
-4. Постоянный URL (сейчас Cloudflare temp tunnel)
+2. График истории AI SCORE
+3. Постоянный URL (сейчас Cloudflare temp tunnel)
+4. Сохранение OHLCV данных в БД (таблица `ohlcv_data` создана, но ingestor не пишет в неё)
+5. WebSocket live feed
 
 ## 🔄 Следующий этап
 - Детальная карточка в UI с 7 gauge-барами
 - Исторический chart AI SCORE
+- Запись OHLCV в БД через ingestor

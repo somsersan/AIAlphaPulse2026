@@ -102,7 +102,7 @@ async def run_scoring_cycle():
         except Exception as e:
             logger.error(f"❌ Failed {asset.ticker}: {e}")
     if results:
-        save_scores(results)
+        await save_scores(results)
         payload = {
             "type": "scores_update",
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
@@ -165,9 +165,9 @@ def get_assets():
             for a, _ in TRACKED_ASSETS]
 
 @router.get("/scores")
-def get_all_scores():
+async def get_all_scores():
     """Get latest score for all tracked assets."""
-    df = load_latest_all()
+    df = await load_latest_all()
     if df.empty:
         return {"scores": [], "note": "No scores yet, scoring in progress..."}
     return {"scores": df.to_dict(orient="records"),
@@ -197,8 +197,8 @@ def get_score(ticker: str, asset_type: str = "stock"):
         raise HTTPException(500, str(e))
 
 @router.get("/history/{ticker}")
-def get_history(ticker: str, days: int = 30):
-    df = load_history(ticker.upper(), days)
+async def get_history(ticker: str, days: int = 30):
+    df = await load_history(ticker.upper(), days)
     if df.empty:
         return {"ticker": ticker, "history": [], "days": days}
     return {"ticker": ticker, "history": df.to_dict(orient="records"), "days": days}
@@ -220,7 +220,7 @@ async def websocket_live(websocket: WebSocket):
     """WebSocket endpoint — pushes score updates in real time."""
     await manager.connect(websocket)
     try:
-        df = load_latest_all()
+        df = await load_latest_all()
         scores = df.to_dict(orient="records") if not df.empty else []
         await websocket.send_text(json.dumps({
             "type": "scores_update",
