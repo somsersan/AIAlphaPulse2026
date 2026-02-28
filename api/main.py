@@ -48,7 +48,7 @@ async def run_scoring_cycle():
         except Exception as e:
             logger.error(f"❌ Failed {asset.ticker}: {e}")
     if results:
-        save_scores(results)
+        await save_scores(results)
     logger.info(f"🏁 Scoring cycle done: {len(results)} assets scored")
     return results
 
@@ -85,10 +85,9 @@ def get_assets():
             for a, _ in TRACKED_ASSETS]
 
 @app.get("/scores")
-def get_all_scores():
+async def get_all_scores():
     """Get latest score for all tracked assets."""
-    import pandas as pd
-    df = load_latest_all()
+    df = await load_latest_all()
     if df.empty:
         return {"scores": [], "note": "No scores yet, scoring in progress..."}
     return {"scores": df.to_dict(orient="records"),
@@ -118,8 +117,8 @@ def get_score(ticker: str, asset_type: str = "stock"):
         raise HTTPException(500, str(e))
 
 @app.get("/history/{ticker}")
-def get_history(ticker: str, days: int = 30):
-    df = load_history(ticker.upper(), days)
+async def get_history(ticker: str, days: int = 30):
+    df = await load_history(ticker.upper(), days)
     if df.empty:
         return {"ticker": ticker, "history": [], "days": days}
     return {"ticker": ticker, "history": df.to_dict(orient="records"), "days": days}
