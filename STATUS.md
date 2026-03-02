@@ -48,19 +48,23 @@ _Последнее обновление: 2026-02-27 Phase 3 (PostgreSQL storage
 ### Frontend
 - Дашборд: карточки + таблица + автообновление 60s
 - Минимализм, чёрно-белый, Space Grotesk
+- **Детальная карточка** (Phase 4 DONE 2026-03-02):
+  - Hash routing: `#/asset/{ticker}` → кнопка "← Назад"
+  - 7 горизонтальных gauge-баров (-100…+100, нулевая точка по центру)
+  - Цвет: зелёный (≥+15) / красный (≤−15) / серый (нейтральный)
+  - Explanation под барами
+  - Responsive: desktop side-by-side, mobile stacked
 
 ### Deploy
 - Dockerfile + docker-compose + nginx
 - GitHub Actions CI/CD
 
 ## ❌ В разработке / не готово
-1. Детальная карточка актива (клик → 7 факторов с объяснением)
-2. График истории AI SCORE
+1. График истории AI SCORE
 3. Постоянный URL (сейчас Cloudflare temp tunnel)
 4. Сохранение OHLCV данных в БД (таблица `ohlcv_data` создана, но ingestor не пишет в неё)
 5. WebSocket live feed
 
 ## 🔄 Следующий этап
-- Детальная карточка в UI с 7 gauge-барами
 - Исторический chart AI SCORE
 - Запись OHLCV в БД через ingestor

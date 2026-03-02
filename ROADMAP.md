@@ -23,7 +23,7 @@
 ## ✅ Phase 4 — Frontend (DONE)
 - [x] React-style dashboard + score cards + таблица + автообновление 60s
 - [x] Минимализм, чёрно-белый, Space Grotesk шрифт
-- [ ] Детальная карточка актива (7 gauge-баров с объяснением)
+- [x] Детальная карточка актива (7 gauge-баров с объяснением) — hash routing #/asset/TICKER
 - [ ] Исторический chart AI SCORE
 
 ## ✅ Phase 5 — Testing + Deploy (DONE)
