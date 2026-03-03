@@ -197,11 +197,14 @@ def get_score(ticker: str, asset_type: str = "stock"):
         raise HTTPException(500, str(e))
 
 @router.get("/history/{ticker}")
-async def get_history(ticker: str, days: int = 30):
-    df = await load_history(ticker.upper(), days)
+async def get_history(ticker: str, days: int = 30, limit: int = None):
+    n = limit if limit is not None else days
+    df = await load_history(ticker.upper(), n)
     if df.empty:
-        return {"ticker": ticker, "history": [], "days": days}
-    return {"ticker": ticker, "history": df.to_dict(orient="records"), "days": days}
+        return []
+    # to_json handles NaN→null and Timestamp→string automatically
+    import json as _json
+    return _json.loads(df.to_json(orient="records", date_format="iso"))
 
 @router.post("/score/refresh")
 async def trigger_refresh(background_tasks: BackgroundTasks):
