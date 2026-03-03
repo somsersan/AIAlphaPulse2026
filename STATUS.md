@@ -1,6 +1,6 @@
 # AI ALPHA PULSE — Что реализовано
 
-_Версия: v0.4.0 | Последнее обновление: 2026-03-02_
+_Версия: v0.4.1 | Последнее обновление: 2026-03-03_
 
 ---
 
@@ -115,7 +115,7 @@ DATABASE_URL=postgresql+asyncpg://... alembic upgrade head
 |-------|------|----------|
 | GET | `/scores` | Все 24 актива, последние скоры (async из storage) |
 | GET | `/score/{ticker}` | Детальный скоринг + factor_scores (7 значений) |
-| GET | `/history/{ticker}` | История AI SCORE из storage |
+| GET | `/history/{ticker}` | История AI SCORE из storage (`?limit=N`, фикс сериализации Timestamp/NaN) |
 | GET | `/assets` | Список всех отслеживаемых активов |
 | POST | `/score/refresh` | Ручной запуск цикла скоринга |
 | WS | `/ws/live` | WebSocket (менеджер готов, трансляция данных — не реализована) |
@@ -158,7 +158,7 @@ TRACKED_ASSETS = [
 | Score cards (цветные значки сигналов) | ✅ |
 | Автообновление каждые 60 сек | ✅ |
 | Space Grotesk шрифт, чёрно-белый минимализм | ✅ |
-| Sparklines (мини-графики 7 дней) | ❌ |
+| Sparklines (мини-графики 7 дней) | ✅ | SVG 60×24px, зелёный/красный тренд, Promise.all параллельный fetch |
 | Детальная карточка актива (7 gauge-баров) | ✅ | Hash routing `#/asset/{ticker}`, gauge bars, responsive |
 | График истории AI SCORE | ❌ |
 | Страница Settings | ❌ |
@@ -187,7 +187,7 @@ pytest tests/test_storage.py  # 21 storage тест
 
 1. **OHLCV запись в БД** — таблица `ohlcv_data` создана, но ingestor'ы не пишут в неё
 2. **WebSocket live feed** — менеджер есть в `api/main.py`, трансляция не реализована
-3. **Sparklines** — нет мини-графиков истории в таблице
+3. ~~**Sparklines**~~ — ✅ DONE (SVG sparklines в таблице, fix `/history` endpoint)
 4. ~~**Asset Detail страница**~~ — ✅ DONE (hash routing, 7 gauge-баров, responsive)
 5. **History chart** — график AI SCORE за 1d/7d/30d
 6. **Settings страница** — настройка весов, API ключи, пороги алертов
