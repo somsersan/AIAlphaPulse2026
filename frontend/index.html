@@ -404,6 +404,58 @@
     letter-spacing: 0.02em;
   }
 
+  /* ── History Chart ──────────────────────────────────────────────── */
+
+  .history-chart-section {
+    margin-top: 36px;
+    padding-top: 28px;
+    border-top: 1px solid var(--border);
+  }
+
+  .history-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .history-chart-title {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .period-buttons { display: flex; gap: 2px; }
+
+  .period-btn {
+    background: transparent;
+    border: 1px solid var(--border-light);
+    color: var(--text-muted);
+    padding: 4px 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: all 0.12s;
+    line-height: 1.5;
+  }
+  .period-btn:hover { border-color: #555; color: var(--text); }
+  .period-btn.period-btn-active {
+    background: var(--text);
+    border-color: var(--text);
+    color: var(--bg);
+    font-weight: 500;
+  }
+
+  .chart-container {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    min-height: 40px;
+  }
+
   /* ── Responsive ─────────────────────────────────────────────────── */
   @media (max-width: 700px) {
     main { padding: 24px 20px; }
@@ -756,7 +808,176 @@ function renderDetail(data) {
       <div class="detail-score-label">AI Score</div>
       <div class="factors-section">${barsHtml}</div>
       ${explSection}
+      <div class="history-chart-section">
+        <div class="history-chart-header">
+          <span class="history-chart-title">AI Score History</span>
+          <div class="period-buttons" id="periodBtns_${ticker}">
+            <button class="period-btn" data-period="1d">1d</button>
+            <button class="period-btn period-btn-active" data-period="7d">7d</button>
+            <button class="period-btn" data-period="30d">30d</button>
+          </div>
+        </div>
+        <div id="chartContainer_${ticker}" class="chart-container"></div>
+      </div>
     </div>`;
+
+  // Period button handlers
+  document.getElementById('periodBtns_' + ticker).addEventListener('click', e => {
+    const btn = e.target.closest('.period-btn');
+    if (!btn) return;
+    document.querySelectorAll('#periodBtns_' + ticker + ' .period-btn')
+      .forEach(b => b.classList.remove('period-btn-active'));
+    btn.classList.add('period-btn-active');
+    loadHistoryChart(ticker, btn.dataset.period);
+  });
+
+  // Default chart
+  loadHistoryChart(ticker, '7d');
+}
+
+/* ── History Chart ───────────────────────────────────────────────── */
+
+const PERIOD_LIMITS = {'1d': 96, '7d': 672, '30d': 2880};
+
+async function loadHistoryChart(ticker, period) {
+  const limit = PERIOD_LIMITS[period] || 672;
+  const container = document.getElementById('chartContainer_' + ticker);
+  if (!container) return;
+  container.innerHTML = '<div style="text-align:center;color:#444;padding:40px 20px;font-size:0.72rem;letter-spacing:0.05em">Loading…</div>';
+  try {
+    const r = await fetch(`${API}/history/${ticker}?limit=${limit}`);
+    const data = await r.json();
+    if (!Array.isArray(data) || data.length < 2) {
+      container.innerHTML = '<div style="text-align:center;color:#444;padding:40px 20px;font-size:0.72rem;letter-spacing:0.05em">No history data yet</div>';
+      return;
+    }
+    renderHistoryChart(data, container, ticker, period);
+  } catch(e) {
+    container.innerHTML = '<div style="text-align:center;color:#444;padding:40px 20px;font-size:0.72rem">Chart unavailable</div>';
+  }
+}
+
+function renderHistoryChart(data, container, ticker, period) {
+  const W  = Math.max(container.clientWidth || 580, 280);
+  const H  = 160;
+  const pL = 36, pR = 12, pT = 10, pB = 22;
+  const cW = W - pL - pR;
+  const cH = H - pT - pB;
+  const n  = data.length;
+
+  function xPx(i) { return pL + (i / (n - 1)) * cW; }
+  function yPx(v) { return pT + (1 - (v + 100) / 200) * cH; }
+
+  const y0   = yPx(0);
+  const pts  = data.map((d, i) => [xPx(i), yPx(+d.ai_score)]);
+
+  // Area polygon: line points + return along y=0
+  const areaPoly = [
+    ...pts,
+    [xPx(n - 1), y0],
+    [xPx(0), y0]
+  ].map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ');
+
+  // Line path
+  const linePath = pts
+    .map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1))
+    .join(' ');
+
+  // Y axis grid + labels
+  const yLevels = [-100, -60, 0, 60, 100];
+  let yGridSvg = '';
+  for (const v of yLevels) {
+    const y   = yPx(v);
+    const isZ = v === 0;
+    const stroke  = isZ ? '#383838' : '#1e1e1e';
+    const dash    = isZ ? ' stroke-dasharray="5,4"' : '';
+    const textCol = v > 0 ? '#4ade80' : v < 0 ? '#f87171' : '#666';
+    const lbl     = (v > 0 ? '+' : '') + v;
+    yGridSvg +=
+      `<line x1="${pL}" y1="${y.toFixed(1)}" x2="${(W-pR).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${stroke}" stroke-width="1"${dash}/>` +
+      `<text x="${(pL-5).toFixed(1)}" y="${(y+3.5).toFixed(1)}" text-anchor="end" fill="${textCol}" font-size="9" font-family="Space Grotesk,Inter,sans-serif">${lbl}</text>`;
+  }
+
+  // X axis labels (5 evenly-spaced)
+  const numL = Math.min(5, n);
+  let xLabelSvg = '';
+  for (let li = 0; li < numL; li++) {
+    const idx = Math.round(li * (n - 1) / (numL - 1));
+    const x   = xPx(idx).toFixed(1);
+    const dt  = new Date(data[idx].timestamp);
+    let lbl;
+    if (period === '1d') {
+      lbl = dt.getHours().toString().padStart(2,'0') + ':' + dt.getMinutes().toString().padStart(2,'0');
+    } else {
+      lbl = dt.toLocaleString('en',{month:'short'}) + ' ' + dt.getDate();
+    }
+    xLabelSvg += `<text x="${x}" y="${H-4}" text-anchor="middle" fill="#444" font-size="9" font-family="Inter,sans-serif">${lbl}</text>`;
+  }
+
+  // ClipPath IDs — unique per ticker
+  const cA    = 'ca_' + ticker;
+  const cB    = 'cb_' + ticker;
+  const cLine = 'cl_' + ticker;
+  const aboveH = Math.max(0, y0 - pT).toFixed(1);
+  const belowH = Math.max(0, pT + cH - y0).toFixed(1);
+
+  const svgHtml = `<svg width="${W}" height="${H}" style="display:block;max-width:100%">
+<defs>
+  <clipPath id="${cA}"><rect x="${pL}" y="${pT}" width="${cW}" height="${aboveH}"/></clipPath>
+  <clipPath id="${cB}"><rect x="${pL}" y="${y0.toFixed(1)}" width="${cW}" height="${belowH}"/></clipPath>
+  <clipPath id="${cLine}"><rect x="${pL}" y="${pT}" width="${cW}" height="${cH}"/></clipPath>
+</defs>
+${yGridSvg}
+<polygon points="${areaPoly}" fill="#22C55E" fill-opacity="0.13" clip-path="url(#${cA})"/>
+<polygon points="${areaPoly}" fill="#EF4444" fill-opacity="0.13" clip-path="url(#${cB})"/>
+<path d="${linePath}" fill="none" stroke="#c8c8c8" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" clip-path="url(#${cLine})"/>
+${xLabelSvg}
+<rect id="ov_${ticker}" x="${pL}" y="${pT}" width="${cW}" height="${cH}" fill="transparent" style="cursor:crosshair"/>
+<line id="ch_${ticker}" x1="0" y1="${pT}" x2="0" y2="${(pT+cH).toFixed(1)}" stroke="#444" stroke-width="1" stroke-dasharray="3,3" style="display:none"/>
+<circle id="cdot_${ticker}" cx="0" cy="0" r="3" fill="#e0e0e0" style="display:none"/>
+</svg>
+<div id="tip_${ticker}" style="display:none;position:absolute;top:0;left:0;background:#0f0f0f;border:1px solid #2a2a2a;border-radius:4px;padding:5px 10px;font-size:0.68rem;color:#d0d0d0;pointer-events:none;white-space:nowrap;z-index:20"></div>`;
+
+  container.innerHTML = `<div style="position:relative">${svgHtml}</div>`;
+
+  // Interactive tooltip
+  const ov  = document.getElementById('ov_' + ticker);
+  const tip = document.getElementById('tip_' + ticker);
+  const ch  = document.getElementById('ch_' + ticker);
+  const dot = document.getElementById('cdot_' + ticker);
+
+  ov.addEventListener('mousemove', e => {
+    const rect = ov.getBoundingClientRect();
+    const frac = Math.max(0, Math.min(1, (e.clientX - rect.left) / cW));
+    const idx  = Math.round(frac * (n - 1));
+    const d    = data[idx];
+    const score = +d.ai_score;
+    const dt    = new Date(d.timestamp);
+    const cx    = xPx(idx).toFixed(1);
+    const cy    = yPx(score).toFixed(1);
+
+    ch.setAttribute('x1', cx); ch.setAttribute('x2', cx); ch.style.display = '';
+    dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.style.display = '';
+
+    const mo  = dt.toLocaleString('en', {month: 'short'});
+    const hh  = dt.getHours().toString().padStart(2,'0');
+    const mm  = dt.getMinutes().toString().padStart(2,'0');
+    tip.textContent = `${mo} ${dt.getDate()}, ${hh}:${mm}  ${score >= 0 ? '+' : ''}${score.toFixed(1)}`;
+
+    tip.style.display = 'block';
+    const svgRect = ov.closest('svg').getBoundingClientRect();
+    const relX = e.clientX - svgRect.left;
+    const relY = e.clientY - svgRect.top;
+    const flipX = relX > W * 0.65;
+    tip.style.left  = flipX ? '' : (relX + 14) + 'px';
+    tip.style.right = flipX ? (W - relX + 8) + 'px' : '';
+    tip.style.top   = Math.max(4, relY - 30) + 'px';
+  });
+  ov.addEventListener('mouseleave', () => {
+    tip.style.display = 'none';
+    ch.style.display  = 'none';
+    dot.style.display = 'none';
+  });
 }
 
 /* ── Init ────────────────────────────────────────────────────────── */
