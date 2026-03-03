@@ -461,12 +461,13 @@
           <th>Trend</th>
           <th>Volatility</th>
           <th>AI Score</th>
+          <th>7 дней</th>
           <th>Signal</th>
           <th style="text-align:left">Explanation</th>
         </tr>
       </thead>
       <tbody id="tableBody">
-        <tr><td colspan="6" class="loading">Loading...</td></tr>
+        <tr><td colspan="7" class="loading">Loading...</td></tr>
       </tbody>
     </table>
   </div>
@@ -538,6 +539,7 @@ async function loadScores() {
 
     renderCards(items);
     renderTable(items);
+    loadSparklines(items);
     document.getElementById('lastUpdate').textContent =
       new Date().toLocaleTimeString('ru', {hour:'2-digit', minute:'2-digit'});
   } catch(e) {
@@ -592,10 +594,43 @@ function renderTable(items) {
       <td>${fmt(t)}</td>
       <td>${fmt(v)}</td>
       <td><span class="td-score ${tdScoreClass(ai)}">${fmt(ai)}</span></td>
+      <td data-sparkline="${item.ticker}" style="text-align:center;vertical-align:middle">—</td>
       <td><span class="tag ${tagClass(sig)}">${sig}</span></td>
       <td class="expl">${item.explanation || '—'}</td>
     </tr>`;
   }).join('');
+}
+
+/* ── Sparklines ──────────────────────────────────────────────────── */
+function buildSparkline(scores) {
+  if (!scores || scores.length < 2) return '—';
+  const W = 60, H = 24;
+  const n = scores.length;
+  const pts = scores.map((s, i) => {
+    const x = (i / (n - 1)) * W;
+    const y = (100 - s) / 200 * H;
+    return `${x.toFixed(1)},${y.toFixed(1)}`;
+  }).join(' ');
+  const color = scores[scores.length - 1] > scores[0] ? '#22C55E' : '#EF4444';
+  return `<svg width="${W}" height="${H}" style="display:block;margin:auto"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+async function loadSparklines(items) {
+  const results = await Promise.all(
+    items.map(item =>
+      fetch(`${API}/history/${item.ticker}?limit=7`)
+        .then(r => r.json())
+        .catch(() => [])
+    )
+  );
+  results.forEach((history, i) => {
+    const ticker = items[i].ticker;
+    const cell = document.querySelector(`td[data-sparkline="${ticker}"]`);
+    if (!cell) return;
+    if (!history || history.length < 2) { cell.textContent = '—'; return; }
+    const scores = history.map(h => +h.ai_score);
+    cell.innerHTML = buildSparkline(scores);
+  });
 }
 
 /* ── Hash routing ────────────────────────────────────────────────── */

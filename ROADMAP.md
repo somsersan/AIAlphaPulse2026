@@ -1,6 +1,6 @@
 # AI ALPHA PULSE — Roadmap + Backlog
 
-_Обновлено: 2026-03-02 | Текущий статус: v0.4.0_
+_Обновлено: 2026-03-03 | Текущий статус: v0.4.1_
 
 ---
 
@@ -22,19 +22,14 @@ _Обновлено: 2026-03-02 | Текущий статус: v0.4.0_
 
 Базовый дашборд уже есть (`frontend/index.html`). Нужно добавить детальность и интерактивность.
 
-### 4.1 Sparklines в таблице
+### 4.1 Sparklines в таблице ✅ DONE (2026-03-03)
 
-**Задача:** Мини-графики истории AI SCORE (7 дней) в каждой строке таблицы.
-
-**Подзадачи:**
-- Загружать `GET /history/{ticker}?limit=7` для каждого актива при загрузке страницы
-- Рисовать SVG sparkline (40×20px) прямо в `<td>` — без библиотек, чистый SVG
-- Цвет линии: зелёный если тренд вверх, красный если вниз
-- Обновлять вместе с основным auto-refresh (60s)
-
-**Примечание:** Для sparklines нужны данные в `storage` (история). Убедиться что scheduler действительно пишет каждые 15 мин.
-
-**Файлы:** `frontend/index.html`, `api/main.py` (endpoint /history уже есть)
+**Реализовано в `frontend/index.html` + `api/main.py`:**
+- SVG sparkline 60×24px, чистый SVG без библиотек
+- Параллельный `Promise.all` fetch `GET /history/{ticker}?limit=7` для всех 24 активов
+- Цвет линии: зелёный если тренд вверх, красный если вниз; "—" при < 2 точек
+- Обновляется вместе с основным auto-refresh (60s)
+- Исправлен endpoint `/history`: добавлен параметр `limit`, фикс сериализации `Timestamp` и `NaN` через `df.to_json(orient="records", date_format="iso")`
 
 ---
 
@@ -305,8 +300,8 @@ _Обновлено: 2026-03-02 | Текущий статус: v0.4.0_
 ```
 Текущий приоритет:
   ✅ Phase 4.2 — Asset Detail страница (DONE 2026-03-02)
-  1. Phase 4.1 — Sparklines
-  3. Phase 5.2 — OHLCV в БД (нужно для sparklines и charts)
+  ✅ Phase 4.1 — Sparklines (DONE 2026-03-03)
+  1. Phase 5.2 — OHLCV в БД (нужно для history charts)
   4. Phase 4.3 — History Chart
   5. Phase 5.4 — Docker healthchecks
   6. Phase 5.3 — VPS Deploy + SSL  ← MVP milestone
