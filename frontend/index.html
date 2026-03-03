@@ -126,7 +126,7 @@
     background: var(--surface);
     padding: 28px 24px;
     transition: background 0.15s;
-    cursor: default;
+    cursor: pointer;
   }
   .card:hover { background: #141414; }
 
@@ -241,7 +241,8 @@
   }
   td:first-child { text-align: left; color: var(--text); }
 
-  tr:hover td { background: #0c0c0c; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: #0c0c0c; }
 
   .td-ticker {
     font-family: 'Space Grotesk', sans-serif;
@@ -282,6 +283,153 @@
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+
+  /* ── DETAIL VIEW ───────────────────────────────────────────────── */
+
+  .detail-back {
+    margin-bottom: 36px;
+  }
+
+  .detail-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 44px 52px;
+    max-width: 780px;
+  }
+
+  .detail-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+
+  .detail-ticker {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.9rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text);
+  }
+
+  .detail-name {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+    letter-spacing: 0.03em;
+  }
+
+  .detail-score {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 5.5rem;
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin-bottom: 6px;
+  }
+
+  .detail-score-label {
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 44px;
+  }
+
+  /* GAUGE BARS */
+  .factors-section {
+    margin-bottom: 32px;
+  }
+
+  .gauge-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 13px;
+  }
+
+  .gauge-label {
+    width: 190px;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-align: right;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+  }
+
+  .gauge-weight {
+    color: var(--text-dim);
+  }
+
+  .gauge-val {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 400;
+    color: var(--text-muted);
+  }
+
+  .gauge-track {
+    flex: 1;
+    height: 5px;
+    background: #161616;
+    border-radius: 3px;
+    position: relative;
+    border: 1px solid var(--border);
+  }
+
+  .gauge-center {
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    bottom: -3px;
+    width: 1px;
+    background: #2a2a2a;
+    transform: translateX(-50%);
+  }
+
+  .gauge-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    border-radius: 2px;
+  }
+
+  .detail-expl {
+    font-size: 0.7rem;
+    color: #3a3a3a;
+    line-height: 1.7;
+    border-top: 1px solid var(--border);
+    padding-top: 22px;
+    letter-spacing: 0.02em;
+  }
+
+  /* ── Responsive ─────────────────────────────────────────────────── */
+  @media (max-width: 700px) {
+    main { padding: 24px 20px; }
+
+    .detail-card { padding: 28px 24px; }
+
+    .detail-score { font-size: 4rem; }
+
+    .gauge-wrap {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .gauge-label {
+      width: auto;
+      text-align: left;
+    }
+
+    .gauge-track {
+      width: 100%;
+      flex: none;
+      align-self: stretch;
+    }
+  }
 </style>
 </head>
 <body>
@@ -297,7 +445,8 @@
   </div>
 </header>
 
-<main>
+<!-- ── Dashboard View ─────────────────────────────────────────────── -->
+<main id="dashboardView">
   <div class="section-label">Assets Overview</div>
   <div class="cards-grid" id="cardsGrid">
     <div class="loading">Loading scores...</div>
@@ -324,9 +473,22 @@
   </div>
 </main>
 
+<!-- ── Detail View ────────────────────────────────────────────────── -->
+<div id="detailView" style="display:none">
+  <main>
+    <div class="detail-back">
+      <button class="btn" onclick="goBack()">← Назад</button>
+    </div>
+    <div id="detailContent">
+      <div class="loading">Loading...</div>
+    </div>
+  </main>
+</div>
+
 <script>
 const API = '/api';
 
+/* ── Shared helpers ──────────────────────────────────────────────── */
 function scoreClass(s) {
   if (s >= 25) return 'score-pos';
   if (s <= -25) return 'score-neg';
@@ -345,9 +507,9 @@ function tagClass(sig) {
 function tdScoreClass(s) { return s >= 25 ? 'pos' : s <= -25 ? 'neg' : ''; }
 function fmt(n) { return (n > 0 ? '+' : '') + (+n).toFixed(1); }
 
+/* ── Dashboard data ──────────────────────────────────────────────── */
 async function loadScores() {
   try {
-    // Try /scores first, then fetch per-asset
     let items = [];
     try {
       const r = await fetch(`${API}/scores`);
@@ -393,7 +555,7 @@ function renderCards(items) {
     const t   = +item.trend_score;
     const v   = +item.volatility_score;
     const sig = item.signal || 'NEUTRAL';
-    return `<div class="card">
+    return `<div class="card" onclick="navigateToAsset('${item.ticker}')">
       <div class="card-top">
         <div>
           <div class="ticker">${item.ticker}</div>
@@ -424,7 +586,7 @@ function renderTable(items) {
     const t   = +item.trend_score;
     const v   = +item.volatility_score;
     const sig = item.signal || 'NEUTRAL';
-    return `<tr>
+    return `<tr onclick="navigateToAsset('${item.ticker}')">
       <td>
         <div class="td-ticker">${item.ticker}</div>
         <div class="td-name">${item.name || ''}</div>
@@ -439,6 +601,7 @@ function renderTable(items) {
   }).join('');
 }
 
+/* ── Sparklines ──────────────────────────────────────────────────── */
 function buildSparkline(scores) {
   if (!scores || scores.length < 2) return '—';
   const W = 60, H = 24;
@@ -470,7 +633,137 @@ async function loadSparklines(items) {
   });
 }
 
+/* ── Hash routing ────────────────────────────────────────────────── */
+function navigateToAsset(ticker) {
+  window.location.hash = '#/asset/' + ticker;
+}
+
+function goBack() {
+  window.location.hash = '';
+}
+
+function router() {
+  const m = window.location.hash.match(/^#\/asset\/([A-Z0-9]+)$/i);
+  if (m) {
+    showDetail(m[1].toUpperCase());
+  } else {
+    showDashboard();
+  }
+}
+
+function showDashboard() {
+  document.getElementById('dashboardView').style.display = '';
+  document.getElementById('detailView').style.display = 'none';
+}
+
+async function showDetail(ticker) {
+  document.getElementById('dashboardView').style.display = 'none';
+  document.getElementById('detailView').style.display = '';
+  document.getElementById('detailContent').innerHTML =
+    `<div class="loading">Loading ${ticker}...</div>`;
+
+  const assetType = ticker.endsWith('USDT') ? 'crypto' : 'stock';
+  try {
+    const r = await fetch(`${API}/score/${ticker}?asset_type=${assetType}`);
+    if (!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    renderDetail(data);
+  } catch(e) {
+    document.getElementById('detailContent').innerHTML =
+      `<div class="loading">Failed to load data for ${ticker}</div>`;
+  }
+}
+
+/* ── Detail view rendering ───────────────────────────────────────── */
+const FACTOR_LABELS = {
+  trend:             'Trend',
+  sentiment:         'Sentiment',
+  fundamental:       'Fundamental',
+  relative_strength: 'Rel. Strength',
+  volatility:        'Volatility',
+  insider_funds:     'Insider/Funds',
+  macro:             'Macro',
+};
+
+const FACTOR_ORDER = [
+  'trend', 'sentiment', 'fundamental',
+  'relative_strength', 'volatility', 'insider_funds', 'macro',
+];
+
+const DEFAULT_WEIGHTS = {
+  trend: 0.35, sentiment: 0.20, fundamental: 0.20,
+  relative_strength: 0.10, volatility: 0.05, insider_funds: 0.05, macro: 0.05,
+};
+
+function gaugeBar(key, value, weights) {
+  const w    = weights[key] != null ? weights[key] : (DEFAULT_WEIGHTS[key] || 0);
+  const wPct = Math.round(w * 100);
+  const label = FACTOR_LABELS[key] || key;
+  const val  = +value;
+  // halfPct: how far the fill extends from center (0–50% of track width)
+  const halfPct = Math.min(Math.abs(val) / 100 * 50, 50);
+
+  let color;
+  if (val >= 15)  color = '#4ade80';   // green — positive
+  else if (val <= -15) color = '#f87171'; // red — negative
+  else             color = '#383838';   // gray — neutral
+
+  // Positive: fill starts at center (50%), extends right
+  // Negative: fill ends at center (50%), extends left
+  const fillLeft  = val >= 0 ? 50 : (50 - halfPct);
+  const fillStyle = `left:${fillLeft.toFixed(2)}%;width:${halfPct.toFixed(2)}%;background:${color};`;
+
+  const sign = val >= 0 ? '+' : '';
+  return `<div class="gauge-wrap">
+    <div class="gauge-label">${label} <span class="gauge-weight">(${wPct}%)</span>: <span class="gauge-val">${sign}${val.toFixed(1)}</span></div>
+    <div class="gauge-track">
+      <div class="gauge-center"></div>
+      <div class="gauge-fill" style="${fillStyle}"></div>
+    </div>
+  </div>`;
+}
+
+function renderDetail(data) {
+  const ticker = data.asset ? data.asset.ticker : (data.ticker || '—');
+  const name   = data.asset ? data.asset.name   : (data.name   || ticker);
+  const ai  = +data.ai_score;
+  const sig = data.signal || 'NEUTRAL';
+  const expl = data.explanation || '';
+  const fs   = data.factor_scores || {};
+  const w    = data.weights || DEFAULT_WEIGHTS;
+
+  const scoreStr = (ai > 0 ? '+' : '') + ai.toFixed(1);
+
+  const barsHtml = FACTOR_ORDER
+    .filter(k => k in fs)
+    .map(k => gaugeBar(k, fs[k], w))
+    .join('');
+
+  const explSection = expl
+    ? `<div class="detail-expl">${expl}</div>`
+    : '';
+
+  document.getElementById('detailContent').innerHTML = `
+    <div class="detail-card">
+      <div class="detail-top">
+        <div>
+          <div class="detail-ticker">${ticker}</div>
+          <div class="detail-name">${name}</div>
+        </div>
+        <span class="tag ${tagClass(sig)}">${sig}</span>
+      </div>
+      <div class="detail-score ${scoreClass(ai)}">${scoreStr}</div>
+      <div class="detail-score-label">AI Score</div>
+      <div class="factors-section">${barsHtml}</div>
+      ${explSection}
+    </div>`;
+}
+
+/* ── Init ────────────────────────────────────────────────────────── */
+window.addEventListener('hashchange', router);
+
 loadScores();
+router();
 setInterval(loadScores, 60000);
 </script>
 </body>
