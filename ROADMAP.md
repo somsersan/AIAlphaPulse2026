@@ -1,6 +1,6 @@
 # AI ALPHA PULSE — Roadmap + Backlog
 
-_Обновлено: 2026-03-03 | Текущий статус: v0.4.1_
+_Обновлено: 2026-03-03 | Текущий статус: v0.4.2_
 
 ---
 
@@ -46,19 +46,15 @@ _Обновлено: 2026-03-03 | Текущий статус: v0.4.1_
 
 ---
 
-### 4.3 AI SCORE History Chart
+### 4.3 AI SCORE History Chart ✅ DONE (2026-03-03)
 
-**Задача:** Линейный график истории AI SCORE на странице детали актива.
-
-**Подзадачи:**
-- Переключатель периода: 1d / 7d / 30d (кнопки)
-- Загружать `GET /history/{ticker}?limit=N` где N = 96 (1d×15min), 672 (7d), 2880 (30d)
-- Рисовать SVG путь (path) — чистый SVG без библиотек
-- Ось X: метки времени (часы для 1d, дни для 7d/30d)
-- Ось Y: от -100 до +100, нулевая линия подсвечена
-- Tooltip при hover на точку: дата + AI SCORE
-
-**Файлы:** `frontend/index.html`, `api/main.py` (проверить параметры endpoint /history)
+**Реализовано в `frontend/index.html`:**
+- Переключатель периода: `1d` (limit=96) / `7d` (limit=672) / `30d` (limit=2880); активная кнопка — белая заливка; по умолчанию 7d
+- SVG-график 100% ширина × 160px, чистый SVG без библиотек
+- Нулевая горизонталь (пунктир серый); зелёная зона (#22C55E) выше нуля, красная (#EF4444) ниже через SVG `clipPath`
+- Ось Y: метки -100 / -60 / 0 / +60 / +100 с цветовым кодированием
+- Ось X: 5 равноудалённых меток; `HH:MM` для 1d, `Mon DD` для 7d/30d
+- Tooltip при hover: crosshair + dot + дата/время + значение AI SCORE
 
 ---
 
@@ -301,9 +297,9 @@ _Обновлено: 2026-03-03 | Текущий статус: v0.4.1_
 Текущий приоритет:
   ✅ Phase 4.2 — Asset Detail страница (DONE 2026-03-02)
   ✅ Phase 4.1 — Sparklines (DONE 2026-03-03)
-  1. Phase 5.2 — OHLCV в БД (нужно для history charts)
-  4. Phase 4.3 — History Chart
-  5. Phase 5.4 — Docker healthchecks
+  ✅ Phase 4.3 — History Chart (DONE 2026-03-03)
+  1. Phase 5.2 — OHLCV в БД (нужно для точной истории)
+  2. Phase 5.4 — Docker healthchecks
   6. Phase 5.3 — VPS Deploy + SSL  ← MVP milestone
   7. Phase 4.4 — Mobile Responsive
   8. Phase 4.5 — WebSocket

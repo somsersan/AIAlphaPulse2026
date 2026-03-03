@@ -1,6 +1,6 @@
 # AI ALPHA PULSE — Что реализовано
 
-_Версия: v0.4.1 | Последнее обновление: 2026-03-03_
+_Версия: v0.4.2 | Последнее обновление: 2026-03-03_
 
 ---
 
@@ -160,7 +160,7 @@ TRACKED_ASSETS = [
 | Space Grotesk шрифт, чёрно-белый минимализм | ✅ |
 | Sparklines (мини-графики 7 дней) | ✅ | SVG 60×24px, зелёный/красный тренд, Promise.all параллельный fetch |
 | Детальная карточка актива (7 gauge-баров) | ✅ | Hash routing `#/asset/{ticker}`, gauge bars, responsive |
-| График истории AI SCORE | ❌ |
+| График истории AI SCORE | ✅ | SVG линейный chart, 1d/7d/30d, зелёная/красная зона, tooltip, crosshair |
 | Страница Settings | ❌ |
 | Mobile responsive (640px/1024px) | ❌ |
 
@@ -189,7 +189,7 @@ pytest tests/test_storage.py  # 21 storage тест
 2. **WebSocket live feed** — менеджер есть в `api/main.py`, трансляция не реализована
 3. ~~**Sparklines**~~ — ✅ DONE (SVG sparklines в таблице, fix `/history` endpoint)
 4. ~~**Asset Detail страница**~~ — ✅ DONE (hash routing, 7 gauge-баров, responsive)
-5. **History chart** — график AI SCORE за 1d/7d/30d
+5. ~~**History chart**~~ — ✅ DONE (SVG chart 1d/7d/30d, tooltip, зоны)
 6. **Settings страница** — настройка весов, API ключи, пороги алертов
 7. **Mobile responsive** — таблица не адаптирована под мобильные
 8. **VPS deploy + SSL** — сейчас только Cloudflare temp tunnel
